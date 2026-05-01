@@ -1,9 +1,10 @@
 .PHONY: build test clean install fmt vet run help
 
 BINARY     := kwcli
-MODULE     := github.com/KWDB/kwcli
+MODULE     := github.com/shawn0915/kwcli
 BUILDTIME  := $(shell date '+%Y-%m-%d %H:%M:%S')
-LDFLAGS    := -ldflags "-X '$(MODULE)/cmd.buildTime=$(BUILDTIME)'"
+COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+LDFLAGS    := -ldflags "-X '$(MODULE)/cmd.buildTime=$(BUILDTIME)' -X '$(MODULE)/cmd.commitHash=$(COMMIT)'"
 
 # Default target
 build:
@@ -37,7 +38,7 @@ run: build
 
 help:
 	@echo "Available targets:"
-	@echo "  build        Build the $(BINARY) binary with build time injected"
+	@echo "  build        Build the $(BINARY) binary with build time and commit hash injected"
 	@echo "  test         Run all tests"
 	@echo "  clean        Remove built binary"
 	@echo "  install      Install to /usr/local/bin (requires sudo if needed)"

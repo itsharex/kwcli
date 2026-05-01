@@ -35,12 +35,18 @@ kwcli/
 │   ├── playground.go        # playground 子命令
 │   ├── kwdb.go              # kwdb 子命令
 │   ├── sql.go               # SQL 连接命令
+│   ├── sampledb.go          # sampledb 子命令（智能电表模型）
 │   └── general.go           # 通用命令 (list, install, update, uninstall, source)
 └── pkg/                     # 核心包
     ├── component/
     │   └── manager.go       # 组件生命周期管理
     ├── config/
     │   └── config.go        # 配置管理 (Viper)
+    ├── sampledb/
+    │   ├── schema.go        # 智能电表表结构
+    │   ├── data.go          # 智能电表数据生成
+    │   ├── scenarios.go     # 智能电表场景查询
+    │   └── runner.go        # SQL 执行器
     └── utils/
         ├── docker.go        # Docker 工具
         └── http.go          # HTTP 下载工具
@@ -109,6 +115,7 @@ kwcli/
 - [x] Makefile 构建脚本
 - [x] 阿里云镜像仓库优先（`registry.cn-hangzhou.aliyuncs.com/kwdb`）
 - [x] Docker 镜像拉取失败自动回退机制
+- [x] SampleDB 智能电表模型集成（`kwcli sampledb`）
 
 ### Phase 3 - 组件仓库与版本管理（待开发）
 
@@ -165,6 +172,18 @@ kwcli/
 | `kwcli kwdb config set <key> <value>` | 设置配置项 |
 | `kwcli kwdb config path` | 显示配置文件路径 |
 
+### SampleDB 相关
+
+| 命令 | 说明 |
+|------|------|
+| `kwcli sampledb init` | 创建智能电表数据库和表结构 |
+| `kwcli sampledb generate` | 生成示例数据（100电表/10000读数） |
+| `kwcli sampledb list` | 列出所有场景查询 |
+| `kwcli sampledb run <name>` | 运行指定场景查询 |
+| `kwcli sampledb run --all` | 运行所有场景查询 |
+| `kwcli sampledb clean` | 清理所有 SampleDB 数据 |
+| `kwcli sampledb status` | 检查 SampleDB 是否存在 |
+
 ### 通用命令
 
 | 命令 | 说明 |
@@ -212,7 +231,7 @@ make help
 make build
 
 # 或手动 go build
-go build -ldflags "-X 'github.com/KWDB/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S')'" -o kwcli .
+go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S')' -X 'github.com/shawn0915/kwcli/cmd.commitHash=$(git rev-parse --short HEAD)'" -o kwcli .
 
 # 安装到系统
 sudo mv kwcli /usr/local/bin/

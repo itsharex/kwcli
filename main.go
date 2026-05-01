@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/KWDB/kwcli/cmd"
+	"github.com/shawn0915/kwcli/cmd"
 )
 
 func main() {

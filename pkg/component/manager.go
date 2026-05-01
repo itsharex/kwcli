@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/KWDB/kwcli/pkg/config"
+	"github.com/shawn0915/kwcli/pkg/config"
 )
 
 // Component represents a KWDB component

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/KWDB/kwcli/pkg/config"
+	"github.com/shawn0915/kwcli/pkg/config"
 )
 
 func TestComponentRegistry(t *testing.T) {

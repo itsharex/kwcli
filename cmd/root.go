@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	version   = "0.1.0-ShawnYan"
-	buildTime = "unknown"
-	homeDir   string
-	cfgFile   string
+	version    = "0.1.0-ShawnYan"
+	commitHash = "unknown"
+	buildTime  = "unknown"
+	homeDir    string
+	cfgFile    string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -44,8 +45,8 @@ func Execute() error {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Set version template with build time
-	rootCmd.SetVersionTemplate(fmt.Sprintf("kwcli version {{.Version}} (built at %s)\n", buildTime))
+	// Set version template with build time and commit hash
+	rootCmd.SetVersionTemplate(fmt.Sprintf("kwcli version {{.Version}} (Git Hash: %s, Built at %s)\n", commitHash, buildTime))
 
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kwcli/config.yaml)")

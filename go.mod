@@ -1,4 +1,4 @@
-module github.com/KWDB/kwcli
+module github.com/shawn0915/kwcli
 
 go 1.21
 

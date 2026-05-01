@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/KWDB/kwcli/pkg/config"
+	"github.com/shawn0915/kwcli/pkg/config"
 	"github.com/spf13/cobra"
 )
 

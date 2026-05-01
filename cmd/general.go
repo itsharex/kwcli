@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/KWDB/kwcli/pkg/component"
+	"github.com/shawn0915/kwcli/pkg/component"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

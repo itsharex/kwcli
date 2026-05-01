@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KWDB/kwcli/pkg/component"
-	"github.com/KWDB/kwcli/pkg/config"
-	"github.com/KWDB/kwcli/pkg/utils"
+	"github.com/shawn0915/kwcli/pkg/component"
+	"github.com/shawn0915/kwcli/pkg/config"
+	"github.com/shawn0915/kwcli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 

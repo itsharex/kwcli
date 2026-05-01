@@ -12,6 +12,7 @@ KWCLI 是 KWDB 生态的命令行工具，采用组件化架构设计，帮助�
 - 💻 **跨平台**：基于 Go 构建，支持 Linux / macOS / Windows
 - 🌐 **国内加速**：默认优先阿里云镜像仓库，代码源默认 AtomGit
 - ⚙️ **全局配置**：支持一键切换默认代码源和镜像源
+- 📊 **SampleDB**：内置智能电表模型，一键初始化 schema、生成数据、运行场景查询
 
 ## 安装
 
@@ -19,7 +20,7 @@ KWCLI 是 KWDB 生态的命令行工具，采用组件化架构设计，帮助�
 
 ```bash
 # 克隆仓库
-git clone https://github.com/KWDB/kwcli.git
+git clone https://github.com/shawn0915/kwcli.git
 cd kwcli
 
 # 构建（自动注入编译时间）
@@ -35,9 +36,9 @@ make install-local
 ### 手动构建
 
 ```bash
-git clone https://github.com/KWDB/kwcli.git
+git clone https://github.com/shawn0915/kwcli.git
 cd kwcli
-go build -ldflags "-X 'github.com/KWDB/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S')'" -o kwcli .
+go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S')' -X 'github.com/shawn0915/kwcli/cmd.commitHash=$(git rev-parse --short HEAD)'" -o kwcli .
 sudo mv kwcli /usr/local/bin/
 ```
 
@@ -78,6 +79,29 @@ kwcli kwdb install
 kwcli kwdb start
 ```
 
+### 体验 SampleDB（智能电表模型）
+
+```bash
+# 初始化数据库和表结构
+kwcli sampledb init
+
+# 生成示例数据（100 个电表，10000 条读数）
+kwcli sampledb generate
+
+# 查看所有场景
+kwcli sampledb list
+
+# 运行指定场景
+kwcli sampledb run top10-area-energy
+kwcli sampledb run fault-meters
+
+# 运行所有场景
+kwcli sampledb run --all
+
+# 清理所有 SampleDB 数据
+kwcli sampledb clean
+```
+
 ## 命令手册
 
 ### 全局配置
@@ -101,6 +125,18 @@ kwcli kwdb start
 | `kwcli playground logs` | 查看 Playground 日志 |
 | `kwcli playground versions` | 查看已安装的 Playground 版本 |
 | `kwcli playground uninstall` | 卸载 Playground（加 `--remove-files` 彻底删除） |
+
+### SampleDB 相关
+
+| 命令 | 说明 |
+|------|------|
+| `kwcli sampledb init` | 创建智能电表数据库和表结构 |
+| `kwcli sampledb generate` | 生成示例数据 |
+| `kwcli sampledb list` | 列出所有场景查询 |
+| `kwcli sampledb run <name>` | 运行指定场景查询 |
+| `kwcli sampledb run --all` | 运行所有场景查询 |
+| `kwcli sampledb clean` | 清理所有 SampleDB 数据 |
+| `kwcli sampledb status` | 检查 SampleDB 是否存在 |
 
 ### SQL 连接
 
@@ -173,6 +209,7 @@ KWCLI 采用组件化架构设计：
 - [x] 全局代码源配置 (`kwcli source`)
 - [x] 阿里云镜像加速 (`--registry auto`)
 - [x] Makefile 构建脚本
+- [x] SampleDB 智能电表模型 (`kwcli sampledb`)
 - [ ] 组件清单与版本索引
 - [ ] 离线镜像与私有化部署支持
 - [ ] Homebrew / install.sh 一键安装
