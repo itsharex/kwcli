@@ -214,6 +214,14 @@ KWCLI 采用组件化架构设计：
 - [ ] 离线镜像与私有化部署支持
 - [ ] Homebrew / install.sh 一键安装
 
+## 作者
+
+**Shawn Yan**
+
+- 公众号「少安事务所」主笔
+- KWDB MVP
+- 个人主页：[shawnyan.cn](https://shawnyan.cn)
+
 ## 贡献
 
 欢迎提交 Issue 和 PR！
