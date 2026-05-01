@@ -124,13 +124,13 @@ func TestSaveAndLoadKWDBConfig(t *testing.T) {
 
 	// Test config
 	testCfg := KWDBConfig{
-		SQLPort:   26257,
-		HTTPPort:  8080,
-		DataDir:   "/data/kwdb",
-		LogDir:    "/logs/kwdb",
-		Insecure:  true,
+		SQLPort:    26257,
+		HTTPPort:   8080,
+		DataDir:    "/data/kwdb",
+		LogDir:     "/logs/kwdb",
+		Insecure:   true,
 		ListenAddr: "0.0.0.0:26257",
-		HTTPAddr:  "0.0.0.0:8080",
+		HTTPAddr:   "0.0.0.0:8080",
 	}
 
 	// Save config

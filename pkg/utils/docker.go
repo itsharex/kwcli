@@ -24,13 +24,13 @@ func CheckDockerCompose() bool {
 	if err := cmd.Run(); err == nil {
 		return true
 	}
-	
+
 	// Try docker-compose (older)
 	cmd = exec.Command("docker-compose", "version")
 	if err := cmd.Run(); err == nil {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -41,7 +41,7 @@ func GetDockerComposeCmd() []string {
 	if err := cmd.Run(); err == nil {
 		return []string{"docker", "compose"}
 	}
-	
+
 	// Fallback to docker-compose
 	return []string{"docker-compose"}
 }

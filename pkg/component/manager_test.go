@@ -129,8 +129,8 @@ func TestComponent_GetComposeFile(t *testing.T) {
 	defer os.RemoveAll(testHome)
 
 	comp := &Component{
-		Name:        "playground",
-		InstallDir:  filepath.Join(testHome, "components", "playground"),
+		Name:       "playground",
+		InstallDir: filepath.Join(testHome, "components", "playground"),
 	}
 
 	os.MkdirAll(comp.InstallDir, 0755)

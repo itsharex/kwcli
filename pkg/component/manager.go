@@ -12,12 +12,12 @@ import (
 
 // Component represents a KWDB component
 type Component struct {
-	Name         string
-	RepoURL      string
-	RepoURLAlt   string // Alternative repository URL (e.g., AtomGit mirror)
-	Description  string
-	InstallDir   string
-	Version      string // Current version (if installed)
+	Name        string
+	RepoURL     string
+	RepoURLAlt  string // Alternative repository URL (e.g., AtomGit mirror)
+	Description string
+	InstallDir  string
+	Version     string // Current version (if installed)
 }
 
 // VersionMeta holds version information
@@ -30,9 +30,9 @@ type VersionMeta struct {
 type Source string
 
 const (
-	SourceAuto    Source = "auto"     // Auto-detect (try GitHub first, then fallback)
-	SourceGitHub  Source = "github"   // GitHub
-	SourceAtomGit Source = "atomgit"  // AtomGit (mirror)
+	SourceAuto    Source = "auto"    // Auto-detect (try GitHub first, then fallback)
+	SourceGitHub  Source = "github"  // GitHub
+	SourceAtomGit Source = "atomgit" // AtomGit (mirror)
 )
 
 // Registry holds all available components
@@ -464,7 +464,7 @@ func (c *Component) RunDockerCompose(args ...string) error {
 func (c *Component) GetBinaryPath() string {
 	// Try to find kwbase in the installed directory
 	var kwbasePath string
-	
+
 	filepath.Walk(c.InstallDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
@@ -474,7 +474,7 @@ func (c *Component) GetBinaryPath() string {
 		}
 		return nil
 	})
-	
+
 	return kwbasePath
 }
 
@@ -490,7 +490,7 @@ func FindMatchingAsset(releaseAssets []string, osName, arch string) string {
 		lowerAsset := strings.ToLower(asset)
 		lowerOS := strings.ToLower(osName)
 		lowerArch := strings.ToLower(arch)
-		
+
 		if strings.Contains(lowerAsset, lowerOS) && strings.Contains(lowerAsset, lowerArch) {
 			return asset
 		}

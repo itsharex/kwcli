@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	kwdbSQLPort  = 26257
-	kwdbHTTPPort = 8080
+	kwdbSQLPort     = 26257
+	kwdbHTTPPort    = 8080
 	kwdbDockerImage = "kwdb/kwdb"
 )
 
@@ -136,7 +136,7 @@ func init() {
 	kwdbCmd.AddCommand(kwdbStatusCmd)
 	kwdbCmd.AddCommand(kwdbLogsCmd)
 	kwdbCmd.AddCommand(kwdbConfigCmd)
-	
+
 	kwdbConfigCmd.AddCommand(kwdbConfigShowCmd)
 	kwdbConfigCmd.AddCommand(kwdbConfigEditCmd)
 	kwdbConfigCmd.AddCommand(kwdbConfigSetCmd)
@@ -181,7 +181,7 @@ func installKWDB() {
 	// Fallback to Docker
 	fmt.Println("\nUnable to download the KWDB binary package.")
 	fmt.Println("   This may be due to network issues or no package for your OS.")
-	
+
 	fmt.Print("Would you like to start KWDB using Docker instead? [Y/n]: ")
 	var answer string
 	fmt.Scanln(&answer)
@@ -287,7 +287,7 @@ func installKWDBDocker() {
 
 func startKWDB() {
 	installDir := filepath.Join(config.GetComponentsDir(), "kwdb")
-	
+
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
 	if _, err := os.Stat(dockerMarker); err == nil {
@@ -303,7 +303,7 @@ func startKWDB() {
 	binaryMarker := installDir + "/.binary_mode"
 	if _, err := os.Stat(binaryMarker); err == nil {
 		fmt.Println("Starting KWDB (binary mode)...")
-		
+
 		// Find kwbase binary
 		kwbasePath := ""
 		filepath.Walk(installDir, func(path string, info os.FileInfo, err error) error {
@@ -359,7 +359,7 @@ func startKWDB() {
 
 func stopKWDB() {
 	installDir := filepath.Join(config.GetComponentsDir(), "kwdb")
-	
+
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
 	if _, err := os.Stat(dockerMarker); err == nil {
@@ -387,7 +387,7 @@ func stopKWDB() {
 
 func statusKWDB() {
 	installDir := filepath.Join(config.GetComponentsDir(), "kwdb")
-	
+
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
 	if _, err := os.Stat(dockerMarker); err == nil {
@@ -418,7 +418,7 @@ func statusKWDB() {
 
 func logsKWDB() {
 	installDir := filepath.Join(config.GetComponentsDir(), "kwdb")
-	
+
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
 	if _, err := os.Stat(dockerMarker); err == nil {

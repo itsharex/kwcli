@@ -622,7 +622,7 @@ func logsPlayground() {
 	}
 
 	composeCmd := utils.GetDockerComposeCmd()
-	
+
 	dockerCmd := exec.Command(composeCmd[0], append(composeCmd[1:], "-f", composeFile, "logs", "-f")...)
 	dockerCmd.Dir = comp.InstallDir
 	dockerCmd.Stdout = os.Stdout

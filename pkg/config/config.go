@@ -10,23 +10,23 @@ import (
 // ToMap converts KWDBConfig to a map[string]interface{}
 func (c *KWDBConfig) ToMap() map[string]interface{} {
 	return map[string]interface{}{
-		"sql_port":   c.SQLPort,
-		"http_port":  c.HTTPPort,
-		"data_dir":   c.DataDir,
-		"log_dir":    c.LogDir,
-		"insecure":   c.Insecure,
+		"sql_port":    c.SQLPort,
+		"http_port":   c.HTTPPort,
+		"data_dir":    c.DataDir,
+		"log_dir":     c.LogDir,
+		"insecure":    c.Insecure,
 		"listen_addr": c.ListenAddr,
-		"http_addr":  c.HTTPAddr,
+		"http_addr":   c.HTTPAddr,
 	}
 }
 
 // KWDB default configuration
 var DefaultKWDBConfig = KWDBConfig{
-	SQLPort:   26257,
-	HTTPPort:  8080,
-	Insecure:  true,
+	SQLPort:    26257,
+	HTTPPort:   8080,
+	Insecure:   true,
 	ListenAddr: "0.0.0.0:26257",
-	HTTPAddr:  "0.0.0.0:8080",
+	HTTPAddr:   "0.0.0.0:8080",
 }
 
 // KWDBConfig represents KWDB configuration
@@ -81,22 +81,22 @@ func GetKWDBConfigPath() string {
 // LoadKWDBConfig loads KWDB configuration
 func LoadKWDBConfig() (*KWDBConfig, error) {
 	configPath := GetKWDBConfigPath()
-	
+
 	v := viper.New()
 	v.SetConfigFile(configPath)
-	
+
 	if err := v.ReadInConfig(); err != nil {
 		if os.IsNotExist(err) {
 			return &DefaultKWDBConfig, nil
 		}
 		return nil, err
 	}
-	
+
 	var config KWDBConfig
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, err
 	}
-	
+
 	// Apply defaults
 	if config.SQLPort == 0 {
 		config.SQLPort = DefaultKWDBConfig.SQLPort
@@ -110,17 +110,17 @@ func LoadKWDBConfig() (*KWDBConfig, error) {
 	if config.HTTPAddr == "" {
 		config.HTTPAddr = DefaultKWDBConfig.HTTPAddr
 	}
-	
+
 	return &config, nil
 }
 
 // SaveKWDBConfig saves KWDB configuration
 func SaveKWDBConfig(config *KWDBConfig) error {
 	configPath := GetKWDBConfigPath()
-	
+
 	// Ensure directory exists
 	os.MkdirAll(filepath.Dir(configPath), 0755)
-	
+
 	v := viper.New()
 	v.SetConfigFile(configPath)
 	v.Set("sql_port", config.SQLPort)
@@ -130,6 +130,6 @@ func SaveKWDBConfig(config *KWDBConfig) error {
 	v.Set("insecure", config.Insecure)
 	v.Set("listen_addr", config.ListenAddr)
 	v.Set("http_addr", config.HTTPAddr)
-	
+
 	return v.WriteConfig()
 }
