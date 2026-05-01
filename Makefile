@@ -2,7 +2,7 @@
 
 BINARY     := kwcli
 MODULE     := github.com/shawn0915/kwcli
-BUILDTIME  := $(shell date '+%Y-%m-%d %H:%M:%S')
+BUILDTIME  := $(shell date '+%Y-%m-%d %H:%M:%S %z')
 COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 LDFLAGS    := -ldflags "-X '$(MODULE)/cmd.buildTime=$(BUILDTIME)' -X '$(MODULE)/cmd.commitHash=$(COMMIT)'"
 

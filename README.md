@@ -38,7 +38,7 @@ make install-local
 ```bash
 git clone https://github.com/shawn0915/kwcli.git
 cd kwcli
-go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S')' -X 'github.com/shawn0915/kwcli/cmd.commitHash=$(git rev-parse --short HEAD)'" -o kwcli .
+go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S %z')' -X 'github.com/shawn0915/kwcli/cmd.commitHash=$(git rev-parse --short HEAD)'" -o kwcli .
 sudo mv kwcli /usr/local/bin/
 ```
 

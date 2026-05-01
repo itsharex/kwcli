@@ -231,7 +231,7 @@ make help
 make build
 
 # 或手动 go build
-go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S')' -X 'github.com/shawn0915/kwcli/cmd.commitHash=$(git rev-parse --short HEAD)'" -o kwcli .
+go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S %z')' -X 'github.com/shawn0915/kwcli/cmd.commitHash=$(git rev-parse --short HEAD)'" -o kwcli .
 
 # 安装到系统
 sudo mv kwcli /usr/local/bin/
