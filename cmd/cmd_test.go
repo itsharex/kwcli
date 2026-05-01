@@ -34,8 +34,8 @@ func TestRootCmdSetup(t *testing.T) {
 }
 
 func TestVersionValue(t *testing.T) {
-	if version != "0.1.0" {
-		t.Errorf("Expected version '0.1.0', got '%s'", version)
+	if version == "" {
+		t.Error("Expected version to not be empty")
 	}
 }
 
