@@ -5,7 +5,7 @@
 KWCLI 是 KWDB 生态的命令行工具，采用组件化架构设计，帮助你一键安装、运行和管理 KWDB 相关组件。
 
 **当前版本**：v0.1.1  
-**开发语言**：Go (v1.21+)
+**开发语言**：Go (v1.25+)
 
 ## 特性
 
@@ -44,22 +44,13 @@ git clone https://github.com/shawn0915/kwcli.git
 cd kwcli
 
 # 构建（自动注入编译时间）
-make build
+make
 
-# 安装到系统
+# 安装到 ~/.kwcli/bin
 make install
 
-# 或安装到用户目录
-make install-local
-```
-
-### 手动构建
-
-```bash
-git clone https://github.com/shawn0915/kwcli.git
-cd kwcli
-go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=$(date '+%Y-%m-%d %H:%M:%S %z')' -X 'github.com/shawn0915/kwcli/cmd.commitHash=$(git rev-parse --short HEAD)'" -o kwcli .
-sudo mv kwcli /usr/local/bin/
+# 或安装到系统目录（需要 sudo）
+make install-g
 ```
 
 ## 快速开始
@@ -77,7 +68,7 @@ kwcli source github
 ### Shell 自动补全
 
 ```bash
-# Bash (需要安装 bash-completion)
+# Bash
 source <(kwcli completion bash)
 
 # Zsh
@@ -300,6 +291,7 @@ KWCLI 采用组件化架构设计：
 
 ```
 ~/.kwcli/
+├── bin/                 # kwcli 及 TSBS 二进制
 ├── components/          # 组件安装目录
 │   ├── playground/
 │   │   └── versions/    # 多版本共存
@@ -310,7 +302,7 @@ KWCLI 采用组件化架构设计：
 
 ## 依赖要求
 
-- [Go](https://golang.org/) 1.21+（仅构建时需要）
+- [Go](https://golang.org/) 1.25+（仅构建时需要）
 - [Docker](https://docs.docker.com/get-docker/) & Docker Compose（Playground 必需）
 - Git（用于克隆组件仓库）
 
@@ -339,8 +331,42 @@ KWCLI 采用组件化架构设计：
 **Shawn Yan**
 
 - 公众号「少安事务所」主笔
-- KWDB MVP
+- KaiwuDB 社区 KWDB MVP
 - 个人主页：[shawnyan.cn](https://shawnyan.cn)
+- 联系邮箱：admin@shawnyan.cn
+
+<table align="center">
+  <tr>
+    <td align="center" style="padding-bottom: 10px;">公众号</td>
+    <td align="center" style="padding-bottom: 10px;">微信群</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="img/wx.jpg" width="200" /></td>
+    <td align="center"><img src="img/qun.jpg" width="200" /></td>
+  </tr>
+</table>
+
+## ❤️ 特别感谢
+
+特别感谢以下项目：
+
+[KWDB](https://github.com/KWDB) 是一款专为 AIoT 场景设计的分布式多模数据库，由开放原子开源基金会孵化。该项目源自浪潮的 KaiwuDB 项目，支持在同一实例内并发创建时序数据库与关系型数据库，并支持对多模数据进行集成处理。
+
+![](https://github.com/KWDB/.github/raw/main/profile/logo.png)
+
+# ☕ 捐赠支持
+
+如果 kwcli 对你有所帮助，欢迎支持项目持续迭代。点击下面文章链接，文末【稀罕作者】
+
+- [kwcli：开源一个 KaiwuDB 社区版的 CLI 工具](https://mp.weixin.qq.com/s/od7h4yy7tzTFIv11wcjY0w)
+
+> 捐赠后欢迎留下你的昵称和 Github 链接，我将记录到项目 README 里。 ❤️
+
+# ⭐ Star History
+
+如果 kwcli 对你有帮助，欢迎点一个 Star ⭐
+
+你的支持，是项目持续迭代最大的动力。
 
 ## 贡献
 

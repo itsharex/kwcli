@@ -40,3 +40,5 @@ Thumbs.db
 # Build output
 /dist/
 /build/
+bin
+third_party
