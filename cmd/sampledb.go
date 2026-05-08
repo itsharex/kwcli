@@ -76,16 +76,42 @@ var sampledbListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all available scenario queries",
 	Run: func(cmd *cobra.Command, args []string) {
+		category, _ := cmd.Flags().GetString("category")
+
+		var filteredScenarios []sampledb.Scenario
+		if category != "" {
+			for _, s := range sampledb.AllScenarios {
+				if s.Category == category {
+					filteredScenarios = append(filteredScenarios, s)
+				}
+			}
+			if len(filteredScenarios) == 0 {
+				fmt.Printf("No scenarios found for category: %s\n", category)
+				fmt.Println("Available categories: basic, cross-mode, window")
+				return
+			}
+		} else {
+			filteredScenarios = sampledb.AllScenarios
+		}
+
 		fmt.Println("Available Smart Meter Scenarios:")
+		if category != "" {
+			fmt.Printf("(Category: %s)\n", category)
+		}
 		fmt.Println(strings.Repeat("-", 60))
-		for i, s := range sampledb.AllScenarios {
-			fmt.Printf("  %2d. %-25s %s\n", i+1, s.Name, s.Title)
+		for i, s := range filteredScenarios {
+			fmt.Printf("  %2d. %-25s [%s] %s\n", i+1, s.Name, s.Category, s.Title)
 			fmt.Printf("      %s\n", s.Description)
 		}
 		fmt.Println()
 		fmt.Println("Run a scenario:")
 		fmt.Println("  kwcli sampledb run <name>")
 		fmt.Println("  kwcli sampledb run --all")
+		fmt.Println()
+		fmt.Println("Filter by category:")
+		fmt.Println("  kwcli sampledb list --category basic")
+		fmt.Println("  kwcli sampledb list --category cross-mode")
+		fmt.Println("  kwcli sampledb list --category window")
 	},
 }
 
@@ -207,4 +233,6 @@ func init() {
 	sampledbCmd.AddCommand(sampledbStatusCmd)
 
 	sampledbRunCmd.Flags().BoolVar(&sampledbRunAll, "all", false, "Run all scenarios")
+
+	sampledbListCmd.Flags().StringP("category", "c", "", "Filter scenarios by category (basic, cross-mode, window)")
 }
