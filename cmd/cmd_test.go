@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -587,5 +588,22 @@ func TestTSBSIoTQueryTypes(t *testing.T) {
 	}
 	if !iotQueryNames["iot-threshold"] {
 		t.Error("Expected 'iot-threshold' query type in IoT use case")
+	}
+}
+
+// TestCodeFormatting checks that all Go files are properly formatted
+func TestCodeFormatting(t *testing.T) {
+	// Run gofmt to check for formatting issues
+	cmd := exec.Command("gofmt", "-l", ".")
+	cmd.Dir = "/home/shawnyan/kwcli"
+	output, err := cmd.CombinedOutput()
+
+	if err != nil && err.Error() != "exit status 1" {
+		t.Logf("Warning: gofmt check failed: %v", err)
+	}
+
+	unformatted := string(output)
+	if len(unformatted) > 0 {
+		t.Errorf("The following files need formatting:\n%s", unformatted)
 	}
 }
