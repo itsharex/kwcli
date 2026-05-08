@@ -38,7 +38,7 @@ func TestGetDockerComposeCmd(t *testing.T) {
 func TestGetDockerImage(t *testing.T) {
 	// Test with a known image that might exist
 	// This is environment dependent
-	result := GetDockerImage("alpine:latest")
+	result := GetDockerImage("", "alpine:latest")
 
 	// Just verify it returns a boolean
 	_ = result
@@ -54,7 +54,7 @@ func TestPullDockerImage(t *testing.T) {
 	}
 
 	// Try to pull a small test image
-	err := PullDockerImage("alpine:latest")
+	err := PullDockerImage("", "alpine:latest")
 	if err != nil {
 		t.Logf("Could not pull alpine image (may be expected): %v", err)
 	}
@@ -78,7 +78,7 @@ func TestIsPortAvailable(t *testing.T) {
 
 func TestRunDocker(t *testing.T) {
 	// Test running docker --version
-	err := RunDocker("--version")
+	err := RunDocker("", "--version")
 	if err != nil {
 		t.Logf("Docker may not be available: %v", err)
 	}

@@ -16,10 +16,27 @@ KWCLI 是 KWDB 生态的命令行工具，采用组件化架构设计，帮助�
 - 🌐 **国内加速**：默认优先阿里云镜像仓库，代码源默认 AtomGit
 - ⚙️ **全局配置**：支持一键切换默认代码源和镜像源
 - 📊 **SampleDB**：内置智能电表模型，一键初始化 schema、生成数据、运行场景查询
+- 📈 **TSBS 基准测试**：内置 KWDB 时序数据库性能测试工具，无需额外安装
 
 ## 安装
 
-### 使用 Makefile（推荐）
+### 一键安装（推荐）
+
+```bash
+# 下载并执行安装脚本
+curl -sL https://raw.githubusercontent.com/shawn0915/kwcli/main/install.sh | bash
+
+# 或保存后执行
+curl -sL https://raw.githubusercontent.com/shawn0915/kwcli/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
+```
+
+**安装说明：**
+- **RedHat/CentOS 7+**：自动安装到 `~/.kwcli/bin`，并追加 PATH 到 `~/.bashrc`
+- **其他 Linux/macOS**：可选择安装到 `/usr/local/bin`（需要 sudo）
+
+### 使用 Makefile
 
 ```bash
 # 克隆仓库
@@ -55,6 +72,22 @@ kwcli source
 
 # 切换到 GitHub
 kwcli source github
+```
+
+### Shell 自动补全
+
+```bash
+# Bash (需要安装 bash-completion)
+source <(kwcli completion bash)
+
+# Zsh
+kwcli completion zsh > "${fpath[1]}/_kwcli"
+
+# Fish
+kwcli completion fish | source
+
+# PowerShell
+kwcli completion powershell | Out-String | Invoke-Expression
 ```
 
 ### 启动 Playground
@@ -143,24 +176,85 @@ kwcli sampledb clean
 
 ### TSBS 基准测试
 
+TSBS (Time-Series Benchmark Suite) 是 KWDB 内置的时序数据库性能测试工具，已经完整集成到 kwcli 中，无需额外安装。
+
 | 命令 | 说明 |
 |------|------|
-| `kwcli tsbs init` | 初始化基准测试（生成数据和查询） |
+| `kwcli tsbs init` | 初始化基准测试（生成测试数据和查询） |
 | `kwcli tsbs load` | 加载数据到 KWDB |
 | `kwcli tsbs run` | 运行查询基准测试 |
 | `kwcli tsbs list` | 列出可用的查询类型 |
 
 **使用示例**：
 ```bash
-# 初始化基准测试
-kwcli tsbs init --use-case=cpu --scale=10 --queries=1000
+# 初始化基准测试（生成数据和查询）
+kwcli tsbs init --use-case=cpu-only --scale=10 --queries=1000
 
-# 加载数据
-kwcli tsbs load --file=/tmp/tsbs_data --host=127.0.0.1 --port=50000
+# 查看可用查询类型
+kwcli tsbs list
 
-# 运行查询
+# 加载数据到 KWDB
+kwcli tsbs load --file=/tmp/tsbs_data --host=127.0.0.1 --port=50000 --user=root --password=root
+
+# 运行查询基准测试
 kwcli tsbs run --file=/tmp/tsbs_queries --host=127.0.0.1 --port=50000
 ```
+
+**参数说明**：
+- `--use-case`: 测试场景 (cpu-only, devops, iot)
+- `--scale`: 设备数量
+- `--queries`: 生成的查询数量
+- `--timestamp-start/end`: 测试数据时间范围
+
+**内置测试场景**：
+
+| Use Case | Query Type | 说明 |
+|----------|------------|------|
+| **cpu-only** | single-groupby-1-1-12 | 单分组聚合，1个主机，1个指标，12小时 |
+| | single-groupby-5-1-12 | 单分组聚合，5个主机，1个指标，12小时 |
+| | double-groupby-5 | 双分组聚合，5个指标 |
+| | high-cpu-1 | 高CPU查询，1个主机 |
+| | single-groupby-1-1-1 | 单分组聚合，1个主机，1个指标，1小时 |
+| | cpu-max-all-1 | CPU最大值的最大值，1个主机 |
+| | double-groupby-all | 双分组聚合，全部指标 |
+| | single-groupby-5-8-1 | 单分组聚合，5个主机，8个指标，1小时 |
+| | cpu-max-all-32-24 | CPU最大值，32个主机，24小时 |
+| | double-groupby-1 | 双分组聚合，1个指标 |
+| | lastpoint | 最后一点查询 |
+| | single-groupby-1-8-1 | 单分组聚合，1个主机，8个指标，1小时 |
+| | single-groupby-5-1-1 | 单分组聚合，5个主机，1个指标，1小时 |
+| | cpu-max-all-8 | CPU最大值的最大值，8个主机 |
+| | groupby-orderby-limit | 分组排序限制查询 |
+| | high-cpu-all | 高CPU查询，全部主机 |
+| **devops** | single-groupby-5-8-1 | 单分组聚合，5个主机，8个指标，1小时 |
+| | cpu-max-all-32-24 | CPU最大值，32个主机，24小时 |
+| | double-groupby-1 | 双分组聚合，1个指标 |
+| | lastpoint | 最后一点查询 |
+| | single-groupby-1-8-1 | 单分组聚合，1个主机，8个指标，1小时 |
+| | single-groupby-5-1-1 | 单分组聚合，5个主机，1个指标，1小时 |
+| | cpu-max-all-8 | CPU最大值的最大值，8个主机 |
+| | groupby-orderby-limit | 分组排序限制查询 |
+| | high-cpu-all | 高CPU查询，全部主机 |
+| | single-groupby-1-1-12 | 单分组聚合，1个主机，1个指标，12小时 |
+| | single-groupby-5-1-12 | 单分组聚合，5个主机，1个指标，12小时 |
+| | double-groupby-5 | 双分组聚合，5个指标 |
+| | high-cpu-1 | 高CPU查询，1个主机 |
+| | single-groupby-1-1-1 | 单分组聚合，1个主机，1个指标，1小时 |
+| | cpu-max-all-1 | CPU最大值的最大值，1个主机 |
+| | double-groupby-all | 双分组聚合，全部指标 |
+| **iot** | last-loc | 最后位置查询 |
+| | high-load | 高负载查询 |
+| | long-daily-sessions | 长时间日常会话 |
+| | avg-daily-driving-duration | 平均每日驾驶时长 |
+| | daily-activity | 日常活动 |
+| | breakdown-frequency | 故障频率 |
+| | single-last-loc | 单设备最后位置 |
+| | low-fuel | 低燃料查询 |
+| | stationary-trucks | 静止卡车 |
+| | long-driving-sessions | 长时间驾驶会话 |
+| | avg-vs-projected-fuel-consumption | 平均vs预计燃油消耗 |
+| | avg-daily-driving-session | 平均每日驾驶会话 |
+| | avg-load | 平均负载 |
 
 ### SQL 连接
 
@@ -234,6 +328,8 @@ KWCLI 采用组件化架构设计：
 - [x] 阿里云镜像加速 (`--registry auto`)
 - [x] Makefile 构建脚本
 - [x] SampleDB 智能电表模型 (`kwcli sampledb`)
+- [x] TSBS 基准测试工具 (`kwcli tsbs init/load/run/list`)
+- [x] Shell 自动补全 (`kwcli completion [bash|zsh|fish|powershell]`)
 - [ ] 组件清单与版本索引
 - [ ] 离线镜像与私有化部署支持
 - [ ] Homebrew / install.sh 一键安装

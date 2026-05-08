@@ -593,7 +593,7 @@ func TestTSBSIoTQueryTypes(t *testing.T) {
 
 // TestCodeFormatting checks that all Go files are properly formatted
 func TestCodeFormatting(t *testing.T) {
-	// Run gofmt to check for formatting issues
+	// Run gofmt to check for formatting issues (exclude third_party directory)
 	cmd := exec.Command("gofmt", "-l", ".")
 	cmd.Dir = "/home/shawnyan/kwcli"
 	output, err := cmd.CombinedOutput()
@@ -603,7 +603,15 @@ func TestCodeFormatting(t *testing.T) {
 	}
 
 	unformatted := string(output)
-	if len(unformatted) > 0 {
-		t.Errorf("The following files need formatting:\n%s", unformatted)
+	// Filter out third_party directory (it's third-party code)
+	var filtered []string
+	for _, line := range strings.Split(unformatted, "\n") {
+		if line != "" && !strings.HasPrefix(line, "third_party/") {
+			filtered = append(filtered, line)
+		}
+	}
+
+	if len(filtered) > 0 {
+		t.Errorf("The following files need formatting:\n%s", strings.Join(filtered, "\n"))
 	}
 }

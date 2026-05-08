@@ -57,16 +57,22 @@ func IsPortAvailable(port int) bool {
 }
 
 // RunDocker runs a docker command
-func RunDocker(args ...string) error {
-	cmd := exec.Command("docker", args...)
+func RunDocker(runtime string, args ...string) error {
+	if runtime == "" {
+		runtime = "docker"
+	}
+	cmd := exec.Command(runtime, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 // GetDockerImage checks if a docker image exists
-func GetDockerImage(imageName string) bool {
-	cmd := exec.Command("docker", "image", "ls", "-q", imageName)
+func GetDockerImage(runtime, imageName string) bool {
+	if runtime == "" {
+		runtime = "docker"
+	}
+	cmd := exec.Command(runtime, "image", "ls", "-q", imageName)
 	output, err := cmd.Output()
 	if err != nil {
 		return false
@@ -75,9 +81,12 @@ func GetDockerImage(imageName string) bool {
 }
 
 // PullDockerImage pulls a docker image
-func PullDockerImage(imageName string) error {
+func PullDockerImage(runtime, imageName string) error {
+	if runtime == "" {
+		runtime = "docker"
+	}
 	fmt.Printf("Pulling docker image: %s\n", imageName)
-	cmd := exec.Command("docker", "pull", imageName)
+	cmd := exec.Command(runtime, "pull", imageName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

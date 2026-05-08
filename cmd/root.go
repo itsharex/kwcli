@@ -22,6 +22,7 @@ var rootCmd = &cobra.Command{
 	Use:   "kwcli",
 	Short: "KWDB ecosystem command-line tool",
 	Long: fmt.Sprintf(`KWCLI - KWDB ecosystem command-line tool.
+kwcli version %s (Git Hash: %s, Built at %s)
 Go Version: %s
 
 Adopts a component-based architecture to install,
@@ -33,7 +34,10 @@ Quick Start:
     kwcli <comp> start      Start a component
 
 Example:
-    kwcli playground start  Launch KWDB Playground interactive platform`, runtime.Version()),
+    kwcli playground start  Launch KWDB Playground interactive platform
+    kwcli completion bash   Generate bash completion script
+    kwcli completion zsh    Generate zsh completion script`,
+		version, commitHash, buildTime, runtime.Version()),
 	Version: version,
 }
 
@@ -51,6 +55,9 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kwcli/config.yaml)")
 	rootCmd.PersistentFlags().StringVar(&homeDir, "home", "", "KWCLI data directory (default is $HOME/.kwcli)")
+
+	// Add completion command
+	rootCmd.AddCommand(completionCmd)
 }
 
 // initConfig reads in config file and ENV variables if set

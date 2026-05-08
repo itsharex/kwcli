@@ -19,6 +19,31 @@ const (
 	kwdbDockerImage = "kwdb/kwdb"
 )
 
+// getContainerRuntime returns the container runtime command (docker or podman)
+func getContainerRuntime() string {
+	// Check if podman is available
+	if _, err := exec.LookPath("podman"); err == nil {
+		// Check if running on Rocky Linux 9/10 or RHEL-based system
+		if data, err := os.ReadFile("/etc/os-release"); err == nil {
+			content := string(data)
+			if strings.Contains(content, "Rocky Linux") {
+				for _, line := range strings.Split(content, "\n") {
+					if strings.HasPrefix(line, "VERSION_ID=") {
+						version := strings.Trim(strings.TrimPrefix(line, "VERSION_ID="), "\"")
+						if strings.HasPrefix(version, "9") || strings.HasPrefix(version, "10") {
+							return "podman"
+						}
+						break
+					}
+				}
+			} else if strings.Contains(content, "RHEL") || strings.Contains(content, "Red Hat") {
+				return "podman"
+			}
+		}
+	}
+	return "docker"
+}
+
 // kwdbCmd represents the kwdb command
 var kwdbCmd = &cobra.Command{
 	Use:   "kwdb",
@@ -226,12 +251,17 @@ func installKWDBBinary() bool {
 }
 
 func installKWDBDocker() {
-	if !utils.CheckDocker() {
-		fmt.Println("Docker is not installed or not running.")
+	runtimeCmd := getContainerRuntime()
+	fmt.Printf("Using container runtime: %s\n", runtimeCmd)
+
+	// Check if container runtime is available
+	checkCmd := exec.Command(runtimeCmd, "--version")
+	if err := checkCmd.Run(); err != nil {
+		fmt.Printf("%s is not installed or not running.\n", runtimeCmd)
 		os.Exit(1)
 	}
 
-	fmt.Println("Starting KWDB using Docker...")
+	fmt.Println("Starting KWDB using container...")
 
 	// Check ports
 	if !utils.IsPortAvailable(kwdbSQLPort) {
@@ -244,18 +274,22 @@ func installKWDBDocker() {
 	}
 
 	// Pull image if not exists
-	if !utils.GetDockerImage(kwdbDockerImage) {
-		if err := utils.PullDockerImage(kwdbDockerImage); err != nil {
+	if !utils.GetDockerImage(runtimeCmd, kwdbDockerImage) {
+		if err := utils.PullDockerImage(runtimeCmd, kwdbDockerImage); err != nil {
 			fmt.Printf("Failed to pull image: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
+	// Set up data directory in ~/.kwcli/data/kaiwudb
+	dataDir := filepath.Join(config.GetHomeDir(), "data", "kaiwudb")
+	os.MkdirAll(dataDir, 0755)
+
 	// Run container
-	cmd := exec.Command("docker", "run", "-d", "--privileged", "--name", "kwdb",
+	cmd := exec.Command(runtimeCmd, "run", "-d", "--privileged", "--name", "kwdb",
 		"-p", fmt.Sprintf("%d:%d", kwdbSQLPort, kwdbSQLPort),
 		"-p", fmt.Sprintf("%d:%d", kwdbHTTPPort, kwdbHTTPPort),
-		"-v", "/var/lib/kaiwudb:/kaiwudb/deploy/kaiwudb-container",
+		"-v", fmt.Sprintf("%s:/kaiwudb/deploy/kaiwudb-container", dataDir),
 		"--ipc", "shareable",
 		"-w", "/kaiwudb/bin",
 		kwdbDockerImage,
@@ -276,13 +310,13 @@ func installKWDBDocker() {
 	// Write marker file
 	markerPath := filepath.Join(config.GetComponentsDir(), "kwdb", ".docker_mode")
 	os.MkdirAll(filepath.Dir(markerPath), 0755)
-	os.WriteFile(markerPath, []byte("docker"), 0644)
+	os.WriteFile(markerPath, []byte(runtimeCmd), 0644)
 
-	fmt.Println("\nKWDB (Docker) started successfully!")
+	fmt.Println("\nKWDB (Container) started successfully!")
 	fmt.Printf("   SQL Port:  %d\n", kwdbSQLPort)
 	fmt.Printf("   HTTP Port: %d\n", kwdbHTTPPort)
 	fmt.Println("\nConnect using:")
-	fmt.Println("   kwbase sql --insecure --host=127.0.0.1:26257")
+	fmt.Printf("   kwcli sql --host 127.0.0.1:26257 -u root -d defaultdb\n")
 }
 
 func startKWDB() {
@@ -290,9 +324,13 @@ func startKWDB() {
 
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
-	if _, err := os.Stat(dockerMarker); err == nil {
-		fmt.Println("Starting KWDB Docker container...")
-		cmd := exec.Command("docker", "start", "kwdb")
+	if data, err := os.ReadFile(dockerMarker); err == nil {
+		runtimeCmd := strings.TrimSpace(string(data))
+		if runtimeCmd == "" {
+			runtimeCmd = "docker"
+		}
+		fmt.Printf("Starting KWDB container (%s)...\n", runtimeCmd)
+		cmd := exec.Command(runtimeCmd, "start", "kwdb")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Run()
@@ -362,9 +400,13 @@ func stopKWDB() {
 
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
-	if _, err := os.Stat(dockerMarker); err == nil {
-		fmt.Println("Stopping KWDB Docker container...")
-		cmd := exec.Command("docker", "stop", "kwdb")
+	if data, err := os.ReadFile(dockerMarker); err == nil {
+		runtimeCmd := strings.TrimSpace(string(data))
+		if runtimeCmd == "" {
+			runtimeCmd = "docker"
+		}
+		fmt.Printf("Stopping KWDB container (%s)...\n", runtimeCmd)
+		cmd := exec.Command(runtimeCmd, "stop", "kwdb")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Run()
@@ -390,8 +432,12 @@ func statusKWDB() {
 
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
-	if _, err := os.Stat(dockerMarker); err == nil {
-		cmd := exec.Command("docker", "ps", "--all", "--filter", "name=^/kwdb$")
+	if data, err := os.ReadFile(dockerMarker); err == nil {
+		runtimeCmd := strings.TrimSpace(string(data))
+		if runtimeCmd == "" {
+			runtimeCmd = "docker"
+		}
+		cmd := exec.Command(runtimeCmd, "ps", "--all", "--filter", "name=^/kwdb$")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Run()
@@ -421,8 +467,12 @@ func logsKWDB() {
 
 	// Check Docker mode
 	dockerMarker := installDir + "/.docker_mode"
-	if _, err := os.Stat(dockerMarker); err == nil {
-		cmd := exec.Command("docker", "logs", "-f", "kwdb")
+	if data, err := os.ReadFile(dockerMarker); err == nil {
+		runtimeCmd := strings.TrimSpace(string(data))
+		if runtimeCmd == "" {
+			runtimeCmd = "docker"
+		}
+		cmd := exec.Command(runtimeCmd, "logs", "-f", "kwdb")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Run()

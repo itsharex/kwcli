@@ -30,35 +30,50 @@ Examples:
   kwcli tsbs run --help`,
 }
 
-// Detect TSBS installation and path
+// getTSBSPath detects where TSBS binaries are located.
+// It searches in multiple locations:
+//  1. Same directory as kwcli binary
+//  2. kwcli binary's bin/ subdirectory
+//  3. ~/.kwcli/bin/
+//  4. System PATH
+//  5. Legacy ~/.kwcli/components/kwdb-tsbs/ (backward compatible)
 func getTSBSPath() (string, error) {
-	installDir := filepath.Join(config.GetComponentsDir(), "kwdb-tsbs")
-
-	// Check Docker mode
-	dockerMarker := installDir + "/.docker_mode"
-	if _, err := os.Stat(dockerMarker); err == nil {
-		return "docker", nil
-	}
-
-	// Check Binary mode
-	binaryMarker := installDir + "/.binary_mode"
-	if _, err := os.Stat(binaryMarker); err == nil {
-		// Find tsbs binary
-		tsbsPath := findTSBS(installDir)
-		if tsbsPath != "" {
-			return tsbsPath, nil
+	// 1. Same directory as kwcli binary
+	if exePath, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exePath)
+		if p := findTSBS(exeDir); p != "" {
+			return p, nil
+		}
+		// 2. kwcli binary's bin/ subdirectory
+		if p := findTSBS(filepath.Join(exeDir, "bin")); p != "" {
+			return p, nil
 		}
 	}
 
-	// Try to find tsbs anywhere
-	tsbsPath := findTSBS(installDir)
-	if tsbsPath != "" {
-		return tsbsPath, nil
+	// 3. ~/.kwcli/bin/
+	if p := findTSBS(config.GetBinDir()); p != "" {
+		return p, nil
 	}
 
-	return "", fmt.Errorf("kwdb-tsbs is not installed. Please run 'kwcli tsbs install' or clone from https://github.com/KWDB/kwdb-tsbs")
+	// 4. System PATH
+	if path, err := exec.LookPath("tsbs_generate_data"); err == nil {
+		return filepath.Dir(path), nil
+	}
+
+	// 5. Legacy ~/.kwcli/components/kwdb-tsbs/ (backward compatible)
+	legacyDir := filepath.Join(config.GetComponentsDir(), "kwdb-tsbs")
+	dockerMarker := legacyDir + "/.docker_mode"
+	if _, err := os.Stat(dockerMarker); err == nil {
+		return "docker", nil
+	}
+	if p := findTSBS(legacyDir); p != "" {
+		return p, nil
+	}
+
+	return "", fmt.Errorf("TSBS binaries not found. Please build with: make build")
 }
 
+// findTSBS searches for tsbs_generate_data binary in the given directory.
 func findTSBS(searchDir string) string {
 	var tsbsPath string
 	filepath.Walk(searchDir, func(path string, info os.FileInfo, err error) error {
@@ -67,6 +82,7 @@ func findTSBS(searchDir string) string {
 		}
 		if !info.IsDir() && (info.Name() == "tsbs_generate_data" || info.Name() == "tsbs_generate_data.exe") {
 			tsbsPath = filepath.Dir(path)
+			return filepath.SkipDir
 		}
 		return nil
 	})
@@ -106,7 +122,7 @@ Examples:
 		scale, _ := cmd.Flags().GetInt("scale")
 		tsStart, _ := cmd.Flags().GetString("timestamp-start")
 		tsEnd, _ := cmd.Flags().GetString("timestamp-end")
-		interval, _ := cmd.Flags().GetString("sampling-interval")
+		interval, _ := cmd.Flags().GetString("log-interval")
 		queries, _ := cmd.Flags().GetInt("queries")
 		queryType, _ := cmd.Flags().GetString("query-type")
 		dataFile, _ := cmd.Flags().GetString("data-file")
@@ -136,10 +152,11 @@ Examples:
 
 		dataCmdArgs := []string{dataBinaryPath}
 		dataCmdArgs = append(dataCmdArgs, "--use-case", useCase)
+		dataCmdArgs = append(dataCmdArgs, "--format", "kwdb")
 		dataCmdArgs = append(dataCmdArgs, "--scale", fmt.Sprintf("%d", scale))
 		dataCmdArgs = append(dataCmdArgs, "--timestamp-start", tsStart)
 		dataCmdArgs = append(dataCmdArgs, "--timestamp-end", tsEnd)
-		dataCmdArgs = append(dataCmdArgs, "--sampling-interval", interval)
+		dataCmdArgs = append(dataCmdArgs, "--log-interval", interval)
 		dataCmdArgs = append(dataCmdArgs, "--file", dataFile)
 
 		fmt.Printf("Executing: %s\n", strings.Join(dataCmdArgs, " "))
@@ -168,13 +185,15 @@ Examples:
 
 		queryCmdArgs := []string{queryBinaryPath}
 		queryCmdArgs = append(queryCmdArgs, "--use-case", useCase)
+		queryCmdArgs = append(queryCmdArgs, "--format", "kwdb")
 		queryCmdArgs = append(queryCmdArgs, "--scale", fmt.Sprintf("%d", scale))
 		queryCmdArgs = append(queryCmdArgs, "--timestamp-start", tsStart)
 		queryCmdArgs = append(queryCmdArgs, "--timestamp-end", tsEnd)
 		queryCmdArgs = append(queryCmdArgs, "--queries", fmt.Sprintf("%d", queries))
-		if queryType != "" {
-			queryCmdArgs = append(queryCmdArgs, "--query-type", queryType)
+		if queryType == "" {
+			queryType = "double-groupby-5"
 		}
+		queryCmdArgs = append(queryCmdArgs, "--query-type", queryType)
 		queryCmdArgs = append(queryCmdArgs, "--file", queryFile)
 
 		fmt.Printf("Executing: %s\n", strings.Join(queryCmdArgs, " "))
@@ -463,13 +482,13 @@ func init() {
 	tsbsCmd.AddCommand(TSBSListCmd)
 
 	// TSBSInitCmd flags
-	TSBSInitCmd.Flags().StringP("use-case", "u", "cpu", "Use case (cpu, iot)")
+	TSBSInitCmd.Flags().StringP("use-case", "u", "cpu-only", "Use case (cpu-only, cpu-single, devops, iot, devops-generic)")
 	TSBSInitCmd.Flags().IntP("scale", "s", 10, "Number of devices")
 	TSBSInitCmd.Flags().String("timestamp-start", "2024-01-01T00:00:00Z", "Start timestamp (RFC3339)")
 	TSBSInitCmd.Flags().String("timestamp-end", "2024-01-02T00:00:00Z", "End timestamp (RFC3339)")
-	TSBSInitCmd.Flags().String("sampling-interval", "10s", "Sampling interval")
+	TSBSInitCmd.Flags().String("log-interval", "10s", "Data generation interval (e.g., 10s, 1m)")
 	TSBSInitCmd.Flags().Int("queries", 1000, "Number of queries to generate")
-	TSBSInitCmd.Flags().String("query-type", "", "Query type (e.g., double-groupby)")
+	TSBSInitCmd.Flags().String("query-type", "double-groupby-5", "Query type (e.g., double-groupby-5, double-groupby-all for cpu-only; low-fuel, last-loc for iot)")
 	TSBSInitCmd.Flags().String("data-file", "", "Output data file path")
 	TSBSInitCmd.Flags().String("query-file", "", "Output query file path")
 	TSBSInitCmd.Flags().String("output-dir", "", "Output directory for both data and query files")
