@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	version    = "0.1.0-ShawnYan"
+	version    = "0.1.1"
 	commitHash = "unknown"
 	buildTime  = "unknown"
 	homeDir    string

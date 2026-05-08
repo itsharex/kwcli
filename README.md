@@ -1,7 +1,10 @@
 # KWCLI
 
+[![Version](https://img.shields.io/badge/version-v0.1.1-blue)](https://github.com/shawn0915/kwcli)
+
 KWCLI 是 KWDB 生态的命令行工具，采用组件化架构设计，帮助你一键安装、运行和管理 KWDB 相关组件。
 
+**当前版本**：v0.1.1  
 **开发语言**：Go (v1.21+)
 
 ## 特性
@@ -137,6 +140,27 @@ kwcli sampledb clean
 | `kwcli sampledb run --all` | 运行所有场景查询 |
 | `kwcli sampledb clean` | 清理所有 SampleDB 数据 |
 | `kwcli sampledb status` | 检查 SampleDB 是否存在 |
+
+### TSBS 基准测试
+
+| 命令 | 说明 |
+|------|------|
+| `kwcli tsbs init` | 初始化基准测试（生成数据和查询） |
+| `kwcli tsbs load` | 加载数据到 KWDB |
+| `kwcli tsbs run` | 运行查询基准测试 |
+| `kwcli tsbs list` | 列出可用的查询类型 |
+
+**使用示例**：
+```bash
+# 初始化基准测试
+kwcli tsbs init --use-case=cpu --scale=10 --queries=1000
+
+# 加载数据
+kwcli tsbs load --file=/tmp/tsbs_data --host=127.0.0.1 --port=50000
+
+# 运行查询
+kwcli tsbs run --file=/tmp/tsbs_queries --host=127.0.0.1 --port=50000
+```
 
 ### SQL 连接
 
