@@ -535,7 +535,7 @@ func TestTSBSCmdSetup(t *testing.T) {
 	}
 
 	// Check subcommands - now using 'init' instead of 'generate-data' and 'generate-queries'
-	expectedSubCommands := []string{"init", "load", "run", "list"}
+	expectedSubCommands := []string{"init", "load", "run", "list", "clean"}
 	for _, name := range expectedSubCommands {
 		found := false
 		for _, cmd := range tsbsCmd.Commands() {

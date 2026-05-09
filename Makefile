@@ -43,7 +43,11 @@ clean:
 	rm -rf $(TSBS_BIN_DIR)
 	rm -rf third_party
 
-install: default
+install:
+	@if [ ! -f "$(BINARY)" ]; then \
+	  echo "Error: $(BINARY) not found. Please run 'make' first."; \
+	  exit 1; \
+	fi
 	@echo "Installing $(BINARY) to $(HOME)/.kwcli/bin..."
 	@mkdir -p $(HOME)/.kwcli/bin
 	@cp $(BINARY) $(HOME)/.kwcli/bin/$(BINARY)
@@ -53,7 +57,11 @@ install: default
 	fi
 	@echo "Done. Ensure $(HOME)/.kwcli/bin is in your PATH."
 
-install-g: default
+install-g:
+	@if [ ! -f "$(BINARY)" ]; then \
+	  echo "Error: $(BINARY) not found. Please run 'make' first."; \
+	  exit 1; \
+	fi
 	@echo "Installing $(BINARY) to /usr/local/bin..."
 	@cp $(BINARY) /usr/local/bin/$(BINARY)
 	@if [ -d "$(TSBS_BIN_DIR)" ]; then \

@@ -175,6 +175,7 @@ TSBS (Time-Series Benchmark Suite) 是 KWDB 内置的时序数据库性能测试
 | `kwcli tsbs load` | 加载数据到 KWDB |
 | `kwcli tsbs run` | 运行查询基准测试 |
 | `kwcli tsbs list` | 列出可用的查询类型 |
+| `kwcli tsbs clean` | 清理测试文件及数据库 |
 
 **使用示例**：
 ```bash
@@ -185,10 +186,13 @@ kwcli tsbs init --use-case=cpu-only --scale=10 --queries=1000
 kwcli tsbs list
 
 # 加载数据到 KWDB
-kwcli tsbs load --file=/tmp/tsbs_data --host=127.0.0.1 --port=50000 --user=root --password=root
+kwcli tsbs load --file=/tmp/tsbs_data --host=127.0.0.1 --port=26257 --user=root --password=root
 
 # 运行查询基准测试
-kwcli tsbs run --file=/tmp/tsbs_queries --host=127.0.0.1 --port=50000
+kwcli tsbs run --file=/tmp/tsbs_queries --host=127.0.0.1 --port=26257
+
+# 清理测试文件及数据库
+kwcli tsbs clean --drop-db
 ```
 
 **参数说明**：
@@ -320,7 +324,7 @@ KWCLI 采用组件化架构设计：
 - [x] 阿里云镜像加速 (`--registry auto`)
 - [x] Makefile 构建脚本
 - [x] SampleDB 智能电表模型 (`kwcli sampledb`)
-- [x] TSBS 基准测试工具 (`kwcli tsbs init/load/run/list`)
+- [x] TSBS 基准测试工具 (`kwcli tsbs init/load/run/list/clean`)
 - [x] Shell 自动补全 (`kwcli completion [bash|zsh|fish|powershell]`)
 - [ ] 组件清单与版本索引
 - [ ] 离线镜像与私有化部署支持

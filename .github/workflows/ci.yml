@@ -48,7 +48,7 @@ jobs:
 
       - name: Build binary
         run: |
-          make build
+          make
 
       - name: Verify version output
         run: |

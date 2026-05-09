@@ -210,6 +210,12 @@ Examples:
 		fmt.Println("\n✓ Query generation completed!")
 		fmt.Printf("  Query file: %s\n", queryFile)
 
+		// Save query-type metadata for run command auto-detection
+		metaFile := queryFile + ".meta"
+		if err := os.WriteFile(metaFile, []byte(queryType), 0644); err == nil {
+			fmt.Printf("  Meta file:  %s\n", metaFile)
+		}
+
 		// ============================================
 		// Summary
 		// ============================================
@@ -274,14 +280,14 @@ Examples:
 
 		// Password
 		if password, _ := cmd.Flags().GetString("password"); password != "" {
-			cmdArgs = append(cmdArgs, "--password", password)
+			cmdArgs = append(cmdArgs, "--pass", password)
 		}
 
 		// Database
 		if database, _ := cmd.Flags().GetString("database"); database != "" {
-			cmdArgs = append(cmdArgs, "--database", database)
+			cmdArgs = append(cmdArgs, "--db-name", database)
 		} else {
-			cmdArgs = append(cmdArgs, "--database", "benchmark")
+			cmdArgs = append(cmdArgs, "--db-name", "benchmark")
 		}
 
 		// File
@@ -299,6 +305,16 @@ Examples:
 		// Workers
 		if workers, _ := cmd.Flags().GetInt("workers"); workers > 0 {
 			cmdArgs = append(cmdArgs, "--workers", fmt.Sprintf("%d", workers))
+		}
+
+		// Partition
+		if partition, _ := cmd.Flags().GetBool("partition"); !partition {
+			cmdArgs = append(cmdArgs, "--partition", "false")
+		}
+
+		// Insert type
+		if insertType, _ := cmd.Flags().GetString("insert-type"); insertType != "" {
+			cmdArgs = append(cmdArgs, "--insert-type", insertType)
 		}
 
 		fmt.Printf("Executing: %s\n", strings.Join(cmdArgs, " "))
@@ -362,22 +378,36 @@ Examples:
 
 		// Password
 		if password, _ := cmd.Flags().GetString("password"); password != "" {
-			cmdArgs = append(cmdArgs, "--password", password)
+			cmdArgs = append(cmdArgs, "--pass", password)
 		}
 
 		// Database
 		if database, _ := cmd.Flags().GetString("database"); database != "" {
-			cmdArgs = append(cmdArgs, "--database", database)
+			cmdArgs = append(cmdArgs, "--db-name", database)
 		} else {
-			cmdArgs = append(cmdArgs, "--database", "benchmark")
+			cmdArgs = append(cmdArgs, "--db-name", "benchmark")
 		}
 
 		// File
+		queryFile := filepath.Join(os.TempDir(), "tsbs_queries")
 		if file, _ := cmd.Flags().GetString("file"); file != "" {
-			cmdArgs = append(cmdArgs, "--file", file)
-		} else {
-			cmdArgs = append(cmdArgs, "--file", filepath.Join(os.TempDir(), "tsbs_queries"))
+			queryFile = file
 		}
+		cmdArgs = append(cmdArgs, "--file", queryFile)
+
+		// Query type: auto-detect from .meta file if not specified
+		queryType, _ := cmd.Flags().GetString("query-type")
+		if queryType == "" {
+			metaFile := queryFile + ".meta"
+			if data, err := os.ReadFile(metaFile); err == nil {
+				queryType = string(data)
+				fmt.Printf("Auto-detected query type: %s\n", queryType)
+			} else {
+				fmt.Println("Error: --query-type is required (or run 'kwcli tsbs init' first)")
+				os.Exit(1)
+			}
+		}
+		cmdArgs = append(cmdArgs, "--query-type", queryType)
 
 		// Workers
 		if workers, _ := cmd.Flags().GetInt("workers"); workers > 0 {
@@ -386,7 +416,7 @@ Examples:
 
 		// Limit
 		if limit, _ := cmd.Flags().GetInt("limit"); limit > 0 {
-			cmdArgs = append(cmdArgs, "--limit", fmt.Sprintf("%d", limit))
+			cmdArgs = append(cmdArgs, "--max-queries", fmt.Sprintf("%d", limit))
 		}
 
 		fmt.Printf("Executing: %s\n", strings.Join(cmdArgs, " "))
@@ -422,9 +452,130 @@ var TSBSListCmd = &cobra.Command{
 
 		fmt.Println()
 		fmt.Println("Examples:")
-		fmt.Println("  kwcli tsbs generate-queries --use-case=cpu --query-type=double-groupby")
-		fmt.Println("  kwcli tsbs generate-queries --use-case=iot --query-type=threshold")
+		fmt.Println("  kwcli tsbs init --use-case=cpu-only --query-type=double-groupby-5")
+		fmt.Println("  kwcli tsbs init --use-case=iot --query-type=last-loc")
 	},
+}
+
+// TSBSCleanCmd cleans TSBS benchmark data and files
+var TSBSCleanCmd = &cobra.Command{
+	Use:   "clean",
+	Short: "Clean TSBS benchmark data and files",
+	Long: `Clean generated TSBS benchmark data files and optionally drop the benchmark database.
+
+Examples:
+  # Clean generated files only
+  kwcli tsbs clean
+
+  # Clean files and drop benchmark database
+  kwcli tsbs clean --drop-db`,
+	Run: func(cmd *cobra.Command, args []string) {
+		dataFile, _ := cmd.Flags().GetString("data-file")
+		queryFile, _ := cmd.Flags().GetString("query-file")
+		dropDB, _ := cmd.Flags().GetBool("drop-db")
+		host, _ := cmd.Flags().GetString("host")
+		port, _ := cmd.Flags().GetInt("port")
+		user, _ := cmd.Flags().GetString("user")
+		database, _ := cmd.Flags().GetString("database")
+
+		cleaned := false
+
+		// Clean data file
+		if _, err := os.Stat(dataFile); err == nil {
+			if err := os.Remove(dataFile); err == nil {
+				fmt.Printf("Deleted: %s\n", dataFile)
+				cleaned = true
+			} else {
+				fmt.Printf("Failed to delete %s: %v\n", dataFile, err)
+			}
+		}
+
+		// Clean query file
+		if _, err := os.Stat(queryFile); err == nil {
+			if err := os.Remove(queryFile); err == nil {
+				fmt.Printf("Deleted: %s\n", queryFile)
+				cleaned = true
+			} else {
+				fmt.Printf("Failed to delete %s: %v\n", queryFile, err)
+			}
+		}
+
+		// Drop database if requested
+		if dropDB {
+			kwbasePath := findKwbaseForClean()
+			if kwbasePath != "" {
+				dbArgs := []string{kwbasePath, "sql", "--insecure", fmt.Sprintf("--host=%s", host)}
+				if port != 26257 {
+					dbArgs = append(dbArgs, fmt.Sprintf("--port=%d", port))
+				}
+				if user != "" && user != "root" {
+					dbArgs = append(dbArgs, "-u", user)
+				}
+				dbArgs = append(dbArgs, "-e", fmt.Sprintf("DROP DATABASE IF EXISTS %s;", database))
+
+				fmt.Printf("Dropping database '%s' on %s:%d...\n", database, host, port)
+				execCmd := exec.Command(dbArgs[0], dbArgs[1:]...)
+				execCmd.Dir = filepath.Dir(kwbasePath)
+				output, err := execCmd.CombinedOutput()
+				if err != nil {
+					fmt.Printf("Failed to drop database: %v\n%s\n", err, string(output))
+				} else {
+					fmt.Printf("Database '%s' dropped.\n", database)
+					cleaned = true
+				}
+			} else {
+				// Fallback to kwcli sql
+				kwcliPath, err := os.Executable()
+				if err != nil {
+					kwcliPath = "kwcli"
+				}
+				dbArgs := []string{kwcliPath, "sql", fmt.Sprintf("--host=%s", host)}
+				if port != 26257 {
+					dbArgs = append(dbArgs, fmt.Sprintf("--port=%d", port))
+				}
+				if user != "" && user != "root" {
+					dbArgs = append(dbArgs, "-u", user)
+				}
+				dbArgs = append(dbArgs, "-e", fmt.Sprintf("DROP DATABASE IF EXISTS %s;", database))
+
+				fmt.Printf("Dropping database '%s' on %s:%d...\n", database, host, port)
+				execCmd := exec.Command(dbArgs[0], dbArgs[1:]...)
+				output, err := execCmd.CombinedOutput()
+				if err != nil {
+					fmt.Printf("Failed to drop database: %v\n%s\n", err, string(output))
+				} else {
+					fmt.Printf("Database '%s' dropped.\n", database)
+					cleaned = true
+				}
+			}
+		}
+
+		if !cleaned {
+			fmt.Println("Nothing to clean.")
+		} else {
+			fmt.Println("TSBS clean completed.")
+		}
+	},
+}
+
+func findKwbaseForClean() string {
+	installDir := filepath.Join(config.GetComponentsDir(), "kwdb")
+	var kwbasePath string
+	filepath.Walk(installDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		if !info.IsDir() && (info.Name() == "kwbase" || info.Name() == "kwbase.exe") {
+			kwbasePath = path
+		}
+		return nil
+	})
+	if kwbasePath == "" {
+		if p, err := exec.LookPath("kwbase"); err == nil {
+			return p
+		}
+	}
+	return kwbasePath
 }
 
 func getQueryTypes(useCase string) []struct {
@@ -480,6 +631,7 @@ func init() {
 	tsbsCmd.AddCommand(TSBSLoadCmd)
 	tsbsCmd.AddCommand(TSBSRunQueriesCmd)
 	tsbsCmd.AddCommand(TSBSListCmd)
+	tsbsCmd.AddCommand(TSBSCleanCmd)
 
 	// TSBSInitCmd flags
 	TSBSInitCmd.Flags().StringP("use-case", "u", "cpu-only", "Use case (cpu-only, cpu-single, devops, iot, devops-generic)")
@@ -492,19 +644,20 @@ func init() {
 	TSBSInitCmd.Flags().String("data-file", "", "Output data file path")
 	TSBSInitCmd.Flags().String("query-file", "", "Output query file path")
 	TSBSInitCmd.Flags().String("output-dir", "", "Output directory for both data and query files")
-	TSBSInitCmd.Flags().Int("days", 1, "Number of days for data generation")
 
 	TSBSLoadCmd.Flags().String("host", "127.0.0.1", "KWDB host")
-	TSBSLoadCmd.Flags().Int("port", 50000, "KWDB port")
+	TSBSLoadCmd.Flags().Int("port", 26257, "KWDB port")
 	TSBSLoadCmd.Flags().String("user", "root", "KWDB user")
 	TSBSLoadCmd.Flags().String("password", "root", "KWDB password")
 	TSBSLoadCmd.Flags().String("database", "benchmark", "Database name")
 	TSBSLoadCmd.Flags().StringP("file", "f", "", "Input data file")
 	TSBSLoadCmd.Flags().Int("batch-size", 10000, "Batch size")
 	TSBSLoadCmd.Flags().Int("workers", 4, "Number of workers")
+	TSBSLoadCmd.Flags().Bool("partition", false, "Enable table partitioning (requires multi-node cluster)")
+	TSBSLoadCmd.Flags().String("insert-type", "insert", "Insert type (insert, prepare, prepareiot)")
 
 	TSBSRunQueriesCmd.Flags().String("host", "127.0.0.1", "KWDB host")
-	TSBSRunQueriesCmd.Flags().Int("port", 50000, "KWDB port")
+	TSBSRunQueriesCmd.Flags().Int("port", 26257, "KWDB port")
 	TSBSRunQueriesCmd.Flags().String("user", "root", "KWDB user")
 	TSBSRunQueriesCmd.Flags().String("password", "root", "KWDB password")
 	TSBSRunQueriesCmd.Flags().String("database", "benchmark", "Database name")
@@ -513,4 +666,12 @@ func init() {
 	TSBSRunQueriesCmd.Flags().Int("limit", 0, "Limit number of queries to run")
 
 	TSBSListCmd.Flags().StringP("use-case", "u", "", "Filter by use case (cpu, iot)")
+
+	TSBSCleanCmd.Flags().String("data-file", filepath.Join(os.TempDir(), "tsbs_data"), "Data file to clean")
+	TSBSCleanCmd.Flags().String("query-file", filepath.Join(os.TempDir(), "tsbs_queries"), "Query file to clean")
+	TSBSCleanCmd.Flags().Bool("drop-db", false, "Also drop the benchmark database")
+	TSBSCleanCmd.Flags().String("host", "127.0.0.1", "KWDB host")
+	TSBSCleanCmd.Flags().Int("port", 26257, "KWDB port")
+	TSBSCleanCmd.Flags().String("user", "root", "KWDB user")
+	TSBSCleanCmd.Flags().String("database", "benchmark", "Database name")
 }
