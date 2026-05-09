@@ -110,6 +110,13 @@ install_binary() {
     if curl -sL "${download_url}" -o "${temp_dir}/kwcli.tar.gz" 2>/dev/null; then
         tar -xzf "${temp_dir}/kwcli.tar.gz" -C "${temp_dir}"
         mv "${temp_dir}/${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
+        # Install TSBS binaries if present
+        if [[ -d "${temp_dir}/bin" ]]; then
+            echo -e "${YELLOW}Installing TSBS binaries...${NC}"
+            for f in "${temp_dir}/bin"/*; do
+                [[ -f "$f" ]] && mv "$f" "${INSTALL_DIR}/"
+            done
+        fi
     else
         # Fallback: try direct binary download
         local direct_url="https://github.com/${REPO}/releases/download/v${version}/${BINARY_NAME}-${os}-${arch}"
@@ -117,7 +124,7 @@ install_binary() {
         curl -sL "${direct_url}" -o "${INSTALL_DIR}/${BINARY_NAME}"
     fi
     
-    chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
+    chmod +x "${INSTALL_DIR}/${BINARY_NAME}" 2>/dev/null || true
     rm -rf "${temp_dir}"
 }
 
@@ -147,7 +154,7 @@ main() {
     
     # Check if already installed
     if command -v kwcli &> /dev/null; then
-        echo -e "${YELLOW}KWCLI is already installed:$(NC) $(kwcli --version)"
+        echo -e "${YELLOW}KWCLI is already installed:${NC} $(kwcli --version)"
         read -p "Do you want to upgrade? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then

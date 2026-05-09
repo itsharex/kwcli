@@ -82,6 +82,11 @@ jobs:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
+      - name: Clone TSBS source
+        run: |
+          rm -rf third_party/kwdb-tsbs
+          git clone --depth=1 https://gitcode.com/mydb/kwdb-tsbs third_party/kwdb-tsbs
+
       - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
         env:
           GOOS: ${{ matrix.os }}
@@ -89,13 +94,18 @@ jobs:
         run: |
           BUILDTIME=$(date '+%Y-%m-%d %H:%M:%S %z')
           COMMIT=$(git rev-parse --short HEAD)
-          go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=${BUILDTIME}' -X 'github.com/shawn0915/kwcli/cmd.commitHash=${COMMIT}'" -o kwcli-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }} .
+          mkdir -p dist/bin
+          go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=${BUILDTIME}' -X 'github.com/shawn0915/kwcli/cmd.commitHash=${COMMIT}'" -o dist/kwcli${{ matrix.ext }} .
+          for bin in tsbs_generate_data tsbs_generate_queries tsbs_load_kwdb tsbs_run_queries_kwdb; do
+            (cd third_party/kwdb-tsbs && GOOS=${GOOS} GOARCH=${GOARCH} go build -o ../../dist/bin/${bin}${{ matrix.ext }} ./cmd/${bin})
+          done
+          tar czf kwcli-${{ matrix.os }}-${{ matrix.arch }}.tar.gz -C dist .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: kwcli-${{ matrix.os }}-${{ matrix.arch }}
-          path: kwcli-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
+          path: kwcli-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
 
   release:
     name: Release
@@ -119,7 +129,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/kwcli-*
+          files: artifacts/**/*.tar.gz
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

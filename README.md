@@ -35,6 +35,7 @@ chmod +x install.sh
 **安装说明：**
 - **RedHat/CentOS 7+**：自动安装到 `~/.kwcli/bin`，并追加 PATH 到 `~/.bashrc`
 - **其他 Linux/macOS**：可选择安装到 `/usr/local/bin`（需要 sudo）
+- **TSBS 二进制**：安装包已内置 `tsbs_generate_data`、`tsbs_generate_queries`、`tsbs_load_kwdb`、`tsbs_run_queries_kwdb`，无需额外安装
 
 ### 使用 Makefile
 
