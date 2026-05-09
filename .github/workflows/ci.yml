@@ -96,6 +96,7 @@ jobs:
           COMMIT=$(git rev-parse --short HEAD)
           mkdir -p dist/bin
           go build -ldflags "-X 'github.com/shawn0915/kwcli/cmd.buildTime=${BUILDTIME}' -X 'github.com/shawn0915/kwcli/cmd.commitHash=${COMMIT}'" -o dist/kwcli${{ matrix.ext }} .
+          (cd third_party/kwdb-tsbs && go mod tidy)
           for bin in tsbs_generate_data tsbs_generate_queries tsbs_load_kwdb tsbs_run_queries_kwdb; do
             (cd third_party/kwdb-tsbs && GOOS=${GOOS} GOARCH=${GOARCH} go build -o ../../dist/bin/${bin}${{ matrix.ext }} ./cmd/${bin})
           done
